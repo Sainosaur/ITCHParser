@@ -1,4 +1,4 @@
-from messages import Message, incompleteMessageError, illegalLengthError
+from messages import ALL_FIELDS, Message, incompleteMessageError, illegalLengthError
 
 type_to_length = {
     "S": 12,   # System Event
@@ -25,7 +25,6 @@ type_to_length = {
     "N": 20,   # RPII
     "O": 48,   # Direct Listing with Capital Raise
 }
-
 type_to_shape = {
     "S": {"fields": ["eventCode"],
           "lengths": [1]},
@@ -110,10 +109,21 @@ type_to_shape = {
                      "lowerPriceRangeCollar", "upperPriceRangeCollar"],
           "lengths": [8, 1, 4, 4, 4, 8, 4, 4]},
 }
-
-
 COMMON_FIELDS = ["messageType", "stockLocate", "trackingNumber", "timestamp"]
 COMMON_LENGTHS = [1, 2, 2, 6]
+
+# Checks all dictionaries and arrays declared above to ensure they are consistent with each other.
+for t, shape in type_to_shape.items():
+    assert len(shape["fields"]) == len(shape["lengths"]), f"{t}: fields and lengths differ in count"
+    assert 11 + sum(shape["lengths"]) == type_to_length[t], f"{t}: lengths sum to wrong total"
+
+names = set(COMMON_FIELDS)
+for shape in type_to_shape.values():
+    names.update(shape["fields"])
+assert names == set(ALL_FIELDS), f"mismatch: {names ^ set(ALL_FIELDS)}"
+
+
+
 
 def parse(msg_in):
     # Requires a full ITCH 5 message, which is to be parsed fully.
@@ -144,7 +154,3 @@ def parse(msg_in):
         setattr(msg, fields[field], int(data,16))
         index += 2*lengths[field]
     return msg
-
-decoded_message = parse("002441000100001f1aced9f000000000000000109242000000644141504c202020200001e208")
-
-print(vars(decoded_message))
