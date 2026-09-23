@@ -131,11 +131,12 @@ def parse(msg_in):
     length_prefix = int(msg_in[0:4], 16) # Extracts length prefix from message
     type = chr(int(msg_in[4:6], 16)) # Extracts type from message and converts into charecter
 
-    # Error Handling
+    # Error Handling (python errors)
     if len(msg_in) % 2 != 0:
         raise illegalLengthError
     if (len(msg_in) / 2 - 2) != length_prefix:
         raise incompleteMessageError
+    # Error Handling (error messsages)
     try:
         length = type_to_length[type]
     except KeyError:
