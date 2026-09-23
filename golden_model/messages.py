@@ -1,3 +1,29 @@
+type_to_length = {
+    "S": 12,   # System Event
+    "R": 39,   # Stock Directory
+    "H": 25,   # Stock Trading Action
+    "Y": 20,   # Reg SHO Restriction
+    "L": 26,   # Market Participant Position
+    "V": 35,   # MWCB Decline Level
+    "W": 12,   # MWCB Status
+    "K": 28,   # IPO Quoting Period Update
+    "J": 35,   # LULD Auction Collar
+    "h": 21,   # Operational Halt
+    "A": 36,   # Add Order (no MPID)
+    "F": 40,   # Add Order (MPID attribution)
+    "E": 31,   # Order Executed
+    "C": 36,   # Order Executed with Price
+    "X": 23,   # Order Cancel
+    "D": 19,   # Order Delete
+    "U": 35,   # Order Replace
+    "P": 44,   # Trade (non-cross)
+    "Q": 40,   # Cross Trade
+    "B": 19,   # Broken Trade
+    "I": 50,   # NOII
+    "N": 20,   # RPII
+    "O": 48,   # Direct Listing with Capital Raise
+}
+
 type_to_shape = {
     "S": {"fields": ["eventCode"],
           "lengths": [1],
@@ -107,6 +133,12 @@ type_to_shape = {
           "lengths": [8, 1, 4, 4, 4, 8, 4, 4],
           "kinds": ["alpha", "alpha", "price4", "price4", "price4", "int", "price4", "price4"]},
 }
+
+class incompleteMessageError(Exception):
+    pass
+
+class illegalLengthError(Exception):
+    pass
 
 class Message:
     def __init__(self):
