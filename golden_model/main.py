@@ -1,6 +1,119 @@
-from messages import type_to_length, Message, incompleteMessageError, illegalLengthError
+from messages import Message, incompleteMessageError, illegalLengthError
+
+type_to_length = {
+    "S": 12,   # System Event
+    "R": 39,   # Stock Directory
+    "H": 25,   # Stock Trading Action
+    "Y": 20,   # Reg SHO Restriction
+    "L": 26,   # Market Participant Position
+    "V": 35,   # MWCB Decline Level
+    "W": 12,   # MWCB Status
+    "K": 28,   # IPO Quoting Period Update
+    "J": 35,   # LULD Auction Collar
+    "h": 21,   # Operational Halt
+    "A": 36,   # Add Order (no MPID)
+    "F": 40,   # Add Order (MPID attribution)
+    "E": 31,   # Order Executed
+    "C": 36,   # Order Executed with Price
+    "X": 23,   # Order Cancel
+    "D": 19,   # Order Delete
+    "U": 35,   # Order Replace
+    "P": 44,   # Trade (non-cross)
+    "Q": 40,   # Cross Trade
+    "B": 19,   # Broken Trade
+    "I": 50,   # NOII
+    "N": 20,   # RPII
+    "O": 48,   # Direct Listing with Capital Raise
+}
+
+type_to_shape = {
+    "S": {"fields": ["eventCode"],
+          "lengths": [1]},
+
+    "R": {"fields": ["stock", "marketCategory", "financialStatusIndicator", "roundLotSize",
+                     "roundLotsOnly", "issueClassification", "issueSubType", "authenticity",
+                     "shortSaleThresholdIndicator", "ipoFlag", "luldReferencePriceTier",
+                     "etpFlag", "etpLeverageFactor", "inverseIndicator"],
+          "lengths": [8, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 1, 4, 1]},
+
+    "H": {"fields": ["stock", "tradingState", "reserved", "reason"],
+          "lengths": [8, 1, 1, 4]},
+
+    "Y": {"fields": ["stock", "regShoAction"],
+          "lengths": [8, 1]},
+
+    "L": {"fields": ["mpid", "stock", "primaryMarketMaker", "marketMakerMode",
+                     "marketParticipantState"],
+          "lengths": [4, 8, 1, 1, 1]},
+
+    "V": {"fields": ["level1", "level2", "level3"],
+          "lengths": [8, 8, 8]},
+
+    "W": {"fields": ["breachedLevel"],
+          "lengths": [1]},
+
+    "K": {"fields": ["stock", "ipoQuotationReleaseTime", "ipoQuotationReleaseQualifier",
+                     "ipoPrice"],
+          "lengths": [8, 4, 1, 4]},
+
+    "J": {"fields": ["stock", "auctionCollarReferencePrice", "upperAuctionCollarPrice",
+                     "lowerAuctionCollarPrice", "auctionCollarExtension"],
+          "lengths": [8, 4, 4, 4, 4]},
+
+    "h": {"fields": ["stock", "marketCode", "operationalHaltAction"],
+          "lengths": [8, 1, 1]},
+
+    "A": {"fields": ["orderReferenceNumber", "buySellIndicator", "shares", "stock", "price"],
+          "lengths": [8, 1, 4, 8, 4]},
+
+    "F": {"fields": ["orderReferenceNumber", "buySellIndicator", "shares", "stock",
+                     "price", "attribution"],
+          "lengths": [8, 1, 4, 8, 4, 4]},
+
+    "E": {"fields": ["orderReferenceNumber", "executedShares", "matchNumber"],
+          "lengths": [8, 4, 8]},
+
+    "C": {"fields": ["orderReferenceNumber", "executedShares", "matchNumber",
+                     "printable", "executionPrice"],
+          "lengths": [8, 4, 8, 1, 4]},
+
+    "X": {"fields": ["orderReferenceNumber", "cancelledShares"],
+          "lengths": [8, 4]},
+
+    "D": {"fields": ["orderReferenceNumber"],
+          "lengths": [8]},
+
+    "U": {"fields": ["originalOrderReferenceNumber", "newOrderReferenceNumber",
+                     "shares", "price"],
+          "lengths": [8, 8, 4, 4]},
+
+    "P": {"fields": ["orderReferenceNumber", "buySellIndicator", "shares", "stock",
+                     "price", "matchNumber"],
+          "lengths": [8, 1, 4, 8, 4, 8]},
+
+    "Q": {"fields": ["shares", "stock", "crossPrice", "matchNumber", "crossType"],
+          "lengths": [8, 8, 4, 8, 1]},
+
+    "B": {"fields": ["matchNumber"],
+          "lengths": [8]},
+
+    "I": {"fields": ["pairedShares", "imbalanceShares", "imbalanceDirection", "stock",
+                     "farPrice", "nearPrice", "currentReferencePrice", "crossType",
+                     "priceVariationIndicator"],
+          "lengths": [8, 8, 1, 8, 4, 4, 4, 1, 1]},
+
+    "N": {"fields": ["stock", "interestFlag"],
+          "lengths": [8, 1]},
+
+    "O": {"fields": ["stock", "openEligibilityStatus", "minimumAllowablePrice",
+                     "maximumAllowablePrice", "nearExecutionPrice", "nearExecutionTime",
+                     "lowerPriceRangeCollar", "upperPriceRangeCollar"],
+          "lengths": [8, 1, 4, 4, 4, 8, 4, 4]},
+}
 
 
+COMMON_FIELDS = ["messageType", "stockLocate", "trackingNumber", "timestamp"]
+COMMON_LENGTHS = [1, 2, 2, 6]
 
 def parse(msg_in):
     # Requires a full ITCH 5 message, which is to be parsed fully.
@@ -23,23 +136,14 @@ def parse(msg_in):
 
     index = 4
     msg = Message()
-    msg.set_type(type)
-    for field in range(0, len(msg.fields)):
-        data = msg_in[index:index + 2*msg.lengths[field]]
-        if msg.kinds[field] == "alpha":
-            field_entry = ""
-            field_index = 0
-            for iteration in range(0, msg.lengths[field]):
-                field_entry += chr(int(data[field_index:field_index + 2], 16))
-                field_index += 2
-            setattr(msg, msg.fields[field], field_entry)
-        else:
-            setattr(msg, msg.fields[field], int(data,16))
+    fields = COMMON_FIELDS + type_to_shape[type]["fields"]
+    lengths = COMMON_LENGTHS + type_to_shape[type]["lengths"]
 
-        index += 2*msg.lengths[field]
+    for field in range(0, len(fields)):
+        data = msg_in[index:index + 2*lengths[field]]
+        setattr(msg, fields[field], int(data,16))
+        index += 2*lengths[field]
     return msg
-
-1. 
 
 decoded_message = parse("002441000100001f1aced9f000000000000000109242000000644141504c202020200001e208")
 
