@@ -116,13 +116,10 @@ COMMON_LENGTHS = [1, 2, 2, 6]
 for t, shape in type_to_shape.items():
     assert len(shape["fields"]) == len(shape["lengths"]), f"{t}: fields and lengths differ in count"
     assert 11 + sum(shape["lengths"]) == type_to_length[t], f"{t}: lengths sum to wrong total"
-
 names = set(COMMON_FIELDS)
 for shape in type_to_shape.values():
     names.update(shape["fields"])
 assert names == set(ALL_FIELDS), f"mismatch: {names ^ set(ALL_FIELDS)}"
-
-
 
 
 def parse(msg_in):
