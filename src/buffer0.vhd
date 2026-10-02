@@ -32,10 +32,10 @@ BEGIN
                 END LOOP;
             ELSIF read_enable THEN
                 data_registers <= data_in;
-                n_stored <= n_in;
+                n_stored_register <= n_in;
             ELSIF write_enable THEN
                 FOR i IN 0 TO 7 LOOP
-                    IF i < n_stored THEN
+                    IF i < n_stored_register THEN
                         data_out(i) <= data_registers(i);
                     ELSE
                         data_out(i) <= (OTHERS => '0');
