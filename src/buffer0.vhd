@@ -7,18 +7,18 @@ ENTITY buffer0 IS
     PORT (
         clk : in STD_LOGIC;
         data_in: in ITCH_DATA_ARRAY;
-        n_in : in UNSIGNED(2 DOWNTO 0);
+        n_in : in UNSIGNED(3 DOWNTO 0);
         write_enable : in STD_LOGIC;
         reset: in STD_LOGIC;
         data_out : out ITCH_DATA_ARRAY;
-        n_stored: out UNSIGNED(2 DOWNTO 0)
+        n_stored: out UNSIGNED(3 DOWNTO 0)
     );
 END buffer0;
 
 
 ARCHITECTURE behavioral OF buffer0 IS
     SIGNAL data_registers : ITCH_DATA_ARRAY := (OTHERS => "00000000");
-    SIGNAL n_stored_register : UNSIGNED(2 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL n_stored_register : UNSIGNED(3 DOWNTO 0) := (OTHERS => '0');
 BEGIN
     n_stored <= n_stored_register;
 
