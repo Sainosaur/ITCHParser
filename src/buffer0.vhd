@@ -33,7 +33,7 @@ BEGIN
                 FOR i IN 0 TO 7 LOOP
                     data_registers(i) <= "00000000";
                 END LOOP;
-                n_stored_register <= (OTHERS => '1');
+                n_stored_register <= (OTHERS => '0');
             ELSIF write_enable = '1' THEN
                 data_registers <= data_in;
                 n_stored_register <= n_in;
