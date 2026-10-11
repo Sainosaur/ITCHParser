@@ -8,24 +8,27 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: 'pip' # Optional: Caches your pip dependencies for faster runs
 
+      # Better approach: Installs NVC cleanly without wget/deb hassles
       - name: Install NVC
-        run: |
-          sudo apt-get update
-          wget https://github.com/nickg/nvc/releases/download/r1.23.0/nvc_1.23.0-1_amd64_ubuntu-24.04.deb
-          sudo apt install ./nvc_1.23.0-1_amd64_ubuntu-24.04.deb
-          nvc --version
+        uses: nickg/setup-nvc@v1
+        with:
+          version: '1.23.0'
 
       - name: Install Python deps
-        run: pip install cocotb
+        run: |
+          python -m pip install --upgrade pip
+          pip install cocotb --user
 
       - name: Run tests
         run: |
-          ls
           cd test
           make
