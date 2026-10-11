@@ -17,7 +17,8 @@ jobs:
       - name: Install NVC
         run: |
           sudo apt-get update
-          sudo apt-get install -y nvc
+          wget https://github.com/nickg/nvc/releases/download/r1.23.0/nvc_1.23.0-1_amd64_ubuntu-24.04.deb
+          sudo apt install ./nvc_1.23.0-1_amd64_ubuntu-24.04.deb
           nvc --version
 
       - name: Install Python deps
