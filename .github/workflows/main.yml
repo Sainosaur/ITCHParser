@@ -25,4 +25,7 @@ jobs:
         run: pip install cocotb
 
       - name: Run tests
-        run: make
+        run: |
+          ls
+          cd test
+          make
