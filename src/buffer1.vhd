@@ -36,7 +36,11 @@ BEGIN
                     END IF;
                 END LOOP;
                 FOR i IN 0 TO 7 LOOP
-                    data_registers(n_stored_register + 8 + i) <= direct_data_in(7 - i);
+                    IF (n_in > 8) THEN
+                        data_registers(n_stored_register + n_in - 8 + i) <= direct_data_in(7 - i);
+                    ELSE
+                        data_registers(n_stored_register + i) <= direct_data_in(7 - i);
+                    END IF;
                 END LOOP;
             END IF;
         END IF;
