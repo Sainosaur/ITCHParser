@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="cocotb tests"><testsuite name="buffer1" errors="0" failures="1" skipped="0" tests="1" time="0.001" timestamp="2026-10-18T10:35:32.559614+00:00" hostname="Sais-Air.broadband"><testcase classname="buffer1" name="direct_input_test" time="0.001"><failure message="Attempting settings a value during the ReadOnly phase." type="RuntimeError">Traceback (most recent call last):
+  File "/Users/saiadiraju/Documents/Programming/Parser/test/buffer1/buffer1.py", line 17, in direct_input_test
+    await reset(dut)
+  File "/Users/saiadiraju/Documents/Programming/Parser/test/buffer1/buffer1.py", line 7, in reset
+    dut.reset.value = 1
+    ^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.14/site-packages/cocotb/handle.py", line 875, in value
+    raise RuntimeError("Attempting settings a value during the ReadOnly phase.")
+RuntimeError: Attempting settings a value during the ReadOnly phase.
+</failure><properties><property name="cocotb" value="True" /><property name="random_seed" value="1792319732" /><property name="file" value="/Users/saiadiraju/Documents/Programming/Parser/test/buffer1/buffer1.py" /><property name="line" value="11" /><property name="sim_time_unit" value="ns" /><property name="sim_time_start" value="0.0" /><property name="sim_time_stop" value="1.0" /><property name="sim_time_duration" value="1.0" /><property name="sim_time_ratio" value="1800.4490607764915" /></properties><system-err>Test failed with COCOTB_RANDOM_SEED=1792319732
+</system-err></testcase></testsuite></testsuites>
