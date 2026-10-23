@@ -65,6 +65,7 @@ async def random_split_message_injection(dut):
 
 @c.test
 async def full_itch_message_test(dut):
+    Clock(dut.clk, 1, "ns").start()
     for n in range(1000):
         starting_message_length = r.randint(14,52) # Create an initial message of starting length
         real_message = []
@@ -98,8 +99,6 @@ async def full_itch_message_test(dut):
             random_number = r.randint(0,255)
             original_surplus_message.append(random_number)
             surplus_message.append(random_number)
-
-        Clock(dut.clk, 1, "ns").start()
 
         await reset(dut)
 
