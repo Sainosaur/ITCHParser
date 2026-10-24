@@ -5,6 +5,8 @@ import random as r
 
 async def reset(dut):
     await FallingEdge(dut.clk)
+    dut.direct_n_in.value = 0
+    dut.temp_n_in.value = 0
     dut.reset.value = 1
     await RisingEdge(dut.clk)
     dut.reset.value = 0
@@ -19,12 +21,12 @@ def process_output(dut):
 @c.test
 async def direct_input_ones_test(dut):
     Clock(dut.clk, 1, "ns").start()
-
+    dut.temp_n_in.value = 0
     for i in range(9):
         data_in = [255] * i + [0] * (8-i)
         await reset(dut)
         dut.direct_data_in.value = data_in
-        dut.n_in.value = i
+        dut.direct_n_in.value = i
 
         await RisingEdge(dut.clk)
         await ReadOnly()
@@ -39,48 +41,58 @@ async def direct_input_ones_test(dut):
 async def random_split_message_injection(dut):
     Clock(dut.clk, 1, "ns").start()
     for n in range(1000):
-        message_length = r.randint(8,16)
-        message = []
+        direct_length = r.randint(0,8)
+        temp_length = r.randint(0,8)
+        direct_message = []
+        temp_message = []
 
-        for i in range(message_length):
-            message.append(r.randint(0,255))
-        message = [0] * (16- message_length) + message
+        for i in range(direct_length):
+            direct_message.append(r.randint(0,255))
+        direct_message = direct_message + [0] * (8 - direct_length)
 
-        await FallingEdge(dut.clk)
+        for i in range(temp_length):
+            temp_message.append(r.randint(0,255))
+        temp_message =  [0] * (8 - temp_length) + temp_message
+
         await reset(dut)
 
-        dut.temp_data_in.value = message[0:8]
-        dut.direct_data_in.value = message[8:]
-        dut.n_in.value = message_length
+        dut.reset.value = 1
+        dut.temp_n_in.value = temp_length
+        dut.temp_data_in.value = temp_message
+        dut.direct_data_in.value = direct_message
+        dut.direct_n_in.value = direct_length
 
         await RisingEdge(dut.clk)
         await ReadOnly()
 
         output_data = process_output(dut)
-        expected_output = message[16 - message_length:]
+        expected_output = temp_message[8 - temp_length:] + direct_message[0:direct_length]
 
 
-        assert output_data[0:message_length] == expected_output
-        assert dut.n_stored.value == message_length
+        assert output_data[0:temp_length + direct_length] == expected_output
+        assert dut.n_stored.value == temp_length + direct_length
 
 @c.test
 async def full_itch_message_test(dut):
     Clock(dut.clk, 1, "ns").start()
     for n in range(1000):
-        starting_message_length = r.randint(14,52) # Create an initial message of starting length
-        real_message = []
+        message_length = r.randint(14,52) # Create an initial message of starting length
+        temp_message_length = r.randint(0,8) # Moves a component of the message out into a temp injection
+
+        direct_message_length = message_length - temp_message_length
+        message = []
         flat_message = []
         current_set = []
         current_count = 0
         last_set_count = 0
-        for i in range(starting_message_length):
+        for i in range(direct_message_length):
             if current_count < 8:
                 random_number = r.randint(0,255)
                 current_set.append(random_number)
                 flat_message.append(random_number)
                 current_count += 1
             else:
-                real_message.append(current_set)
+                message.append(current_set)
                 random_number = r.randint(0,255)
                 flat_message.append(random_number)
                 current_set = [random_number]
@@ -88,39 +100,43 @@ async def full_itch_message_test(dut):
         last_set_count = len(current_set)
         for i in range(8 - len(current_set)): # Ensures final set is added to message correctly
             current_set.append(0)
-        real_message.append(current_set)
+        message.append(current_set)
 
-        surplus_injection_length = r.randint(0,8) # Add an additional extra message to feed into temp_data_in. Simulating a partial message in ITCH 5
-        original_surplus_message = []
-        surplus_message = []
-        for i in range(8 - surplus_injection_length):
-            surplus_message.append(0)
-        for i in range(surplus_injection_length):
+        temp_message = []
+        for i in range(8 - temp_message_length):
+            temp_message.append(0)
+        for i in range(temp_message_length):
             random_number = r.randint(0,255)
-            original_surplus_message.append(random_number)
-            surplus_message.append(random_number)
+            temp_message.append(random_number)
 
-        await reset(dut)
+        await FallingEdge(dut.clk)
 
-        dut.direct_data_in.value = real_message[0]
-        dut.temp_data_in.value = surplus_message
-        dut.n_in.value = 8 + surplus_injection_length
+        dut.reset.value = 1
+        dut.direct_data_in.value = message[0]
+        dut.temp_data_in.value = temp_message
+        dut.temp_n_in.value = temp_message_length
+        dut.direct_n_in.value = min(len(message[0]), len(flat_message))
 
         await RisingEdge(dut.clk)
         await ReadOnly()
 
-        for i in range(1, len(real_message)):
+
+        for i in range(1, len(message)):
             await FallingEdge(dut.clk)
-            dut.direct_data_in.value = real_message[i]
+            dut.temp_n_in.value = 0
+            dut.reset.value = 0
+            dut.direct_data_in.value = message[i]
             dut.temp_data_in.value = [0] * 8
-            if i == len(real_message) - 1:
-                dut.n_in.value = last_set_count
+
+            if i == len(message) - 1:
+                dut.direct_n_in.value = last_set_count
             else:
-                dut.n_in.value = 8
+                dut.direct_n_in.value = 8
 
             await RisingEdge(dut.clk)
             await ReadOnly()
 
-        expected_output = original_surplus_message + flat_message
+        expected_output = temp_message[8 - temp_message_length:] + flat_message
         n_stored = dut.n_stored.value
+
         assert expected_output == process_output(dut)[0:n_stored]

@@ -32,24 +32,19 @@ BEGIN
             IF reset = '1' THEN
                 n_stored_register <= direct_n_in + temp_n_in;
                 FOR i IN 0 TO 7 LOOP
-                    IF (temp_n_in + direct_n_in - 8) > i THEN
-                        data_registers(i) <= temp_data_in(temp_n_in - i);
+                    IF (temp_n_in) > i THEN
+                        data_registers(i) <= temp_data_in(temp_n_in - 1 - i);
                     END IF;
                 END LOOP;
                 FOR i IN 0 TO 7 LOOP
-                    IF (direct_n_in + temp_n_in > 8) THEN
-                        data_registers(temp_n_in - direct_n_in + i) <= direct_data_in(7 - i);
-                    ELSE
-                        data_registers(i) <= direct_data_in(7 - i);
-                    END IF;
+                    data_registers(temp_n_in + i) <= direct_data_in(7 - i);
                 END LOOP;
             ELSE
                 n_stored_register <= n_stored_register + direct_n_in;
                 FOR i IN 0 TO 7 LOOP
-                        data_registers(n_stored_register + i) <= direct_data_in(7 - i);
+                    data_registers(n_stored_register + i) <= direct_data_in(7 - i);
                 END LOOP;
             END IF;
-
         END IF;
     END PROCESS;
 
