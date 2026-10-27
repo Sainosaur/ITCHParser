@@ -9,8 +9,8 @@ ENTITY buffer1 IS
         clk: IN STD_LOGIC;
         direct_data_in: IN ITCH_DATA_ARRAY;
         temp_data_in: IN ITCH_DATA_ARRAY;
-        direct_n_in: IN INTEGER RANGE 0 to 16;
-        temp_n_in: IN INTEGER RANGE 0 to 16;
+        direct_n_in: IN INTEGER RANGE 0 to 8;
+        temp_n_in: IN INTEGER RANGE 0 to 8;
         reset: IN STD_LOGIC;
         n_stored: OUT INTEGER RANGE 0 to 64;
         data_out: OUT BUFFER1_ARRAY
