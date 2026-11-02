@@ -21,7 +21,6 @@ END buffer1;
 ARCHITECTURE behavioral OF buffer1 IS
     SIGNAL data_registers : BUFFER1_ARRAY := (OTHERS => "00000000");
     SIGNAL n_stored_register : INTEGER RANGE 0 to 64 := 0;
-    SIGNAL first_messsge : STD_LOGIC := '1';
 BEGIN
     n_stored <= n_stored_register;
     data_out <= data_registers;
