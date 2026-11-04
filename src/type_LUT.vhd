@@ -24,6 +24,7 @@ BEGIN
     BEGIN
         IF rising_edge(clk) THEN
             CASE message_type IS
+                WHEN x"00" => message_length <= x"00"; -- Serves as option to reset
                 WHEN x"53" => message_length <= x"0E"; -- S: System Event (12 + 2)
                 WHEN x"52" => message_length <= x"29"; -- R: Stock Directory (39 + 2)
                 WHEN x"48" => message_length <= x"1B"; -- H: Stock Trading Action (25 + 2)

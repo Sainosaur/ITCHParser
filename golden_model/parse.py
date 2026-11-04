@@ -1,4 +1,4 @@
-from messages import ALL_FIELDS, Message, incompleteMessageError, illegalLengthError
+from .messages import ALL_FIELDS, Message, incompleteMessageError, illegalLengthError
 
 type_to_length = {
     "S": 12,   # System Event
