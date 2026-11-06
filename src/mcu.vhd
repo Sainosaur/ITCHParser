@@ -72,7 +72,8 @@ BEGIN
                 reset_next_cycle <= '1';
             ELSE
                 b1_reset <= reset_next_cycle;
-                FOR i in 1 TO 8 LOOP
+                b0_reset <= '0';
+                FOR i in 0 TO 7 LOOP
                     IF current_length + i = header_message_length + 1 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7 - i))) + 2;
                     ELSIF current_length + i = header_message_length + 2 THEN
