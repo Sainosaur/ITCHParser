@@ -58,6 +58,17 @@ BEGIN
     message_type <= message_type_register;
     err_out <= '1' WHEN b1_n_stored /= current_length OR TO_INTEGER(UNSIGNED(LUT_length)) /= header_message_length ELSE '0';
 
+    b0_n_in <= 8 - header_message_length + current_length WHEN current_length + 8 > header_message_length ELSE 0;
+    direct_n_in <= header_message_length - current_length WHEN current_length + 8 > header_message_length ELSE
+                   0 WHEN reset = '1' ELSE 8;
+    b0_write_enable <= '0' WHEN reset = '1' ELSE
+                    '1' WHEN current_length + 8 > header_message_length ELSE '0';
+    output_ready <= '1' WHEN current_length + 8 > header_message_length ELSE '0';
+    reset_next_cycle <= '1' WHEN reset = '1' ELSE
+                        '1' WHEN current_length + 8 > header_message_length ELSE '0';
+    b0_reset <= '1' WHEN reset = '1' ELSE '0';
+
+
     PROCESS(clk)
     BEGIN
         IF rising_edge(clk) THEN
@@ -65,14 +76,8 @@ BEGIN
                 message_type_register <= (OTHERS => '0');
                 current_length <= 0;
                 header_message_length <= 0;
-                direct_n_in <= 0;
-                b0_n_in <= 0;
-                b0_reset <= '1';
-                b0_write_enable <= '0';
-                reset_next_cycle <= '1';
             ELSE
                 b1_reset <= reset_next_cycle;
-                b0_reset <= '0';
                 FOR i in 0 TO 7 LOOP
                     IF current_length + i = header_message_length + 1 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7 - i))) + 2;
@@ -82,18 +87,8 @@ BEGIN
                 END LOOP;
                 IF current_length + 8 > header_message_length THEN
                     current_length <= 8 - header_message_length + current_length;
-                    direct_n_in <= header_message_length - current_length;
-                    b0_n_in <= 8 - header_message_length + current_length;
-                    b0_write_enable <= '1';
-                    output_ready <= '1';
-                    reset_next_cycle <= '1';
                 ELSE
                     current_length <= current_length + 8;
-                    b0_n_in <= 0;
-                    direct_n_in <= 8;
-                    b0_write_enable <= '0';
-                    output_ready <= '0';
-                    reset_next_cycle <= '0';
                 END IF;
             END IF;
         END IF;
