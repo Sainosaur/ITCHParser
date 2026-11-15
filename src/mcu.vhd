@@ -63,9 +63,8 @@ BEGIN
                    0 WHEN reset = '1' ELSE 8;
     b0_write_enable <= '0' WHEN reset = '1' ELSE
                     '1' WHEN current_length + 8 > header_message_length ELSE '0';
-    output_ready <= '1' WHEN current_length + 8 > header_message_length ELSE '0';
     reset_next_cycle <= '1' WHEN reset = '1' ELSE
-                        '1' WHEN current_length + 8 > header_message_length ELSE '0';
+                        '1' WHEN current_length + 8 >= header_message_length ELSE '0';
     b0_reset <= '1' WHEN reset = '1' ELSE '0';
 
 
@@ -79,15 +78,25 @@ BEGIN
             ELSE
                 b1_reset <= reset_next_cycle;
                 FOR i in 0 TO 7 LOOP
-                    IF current_length + i = header_message_length + 1 THEN
+                    IF current_length = 0 THEN
+                        header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(6))) + 2;
+                        message_type_register <= ITCH_stream(5);
+                    ELSIF current_length = 1 THEN
+                        header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7))) + 2;
+                        message_type_register <= ITCH_stream(6);
+                    ELSIF current_length = 2 THEN
+                        message_type_register <= ITCH_stream(7);
+                    ELSIF current_length + i = header_message_length + 1 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7 - i))) + 2;
                     ELSIF current_length + i = header_message_length + 2 THEN
                         message_type_register <= ITCH_stream(7 - i);
                     END IF;
                 END LOOP;
-                IF current_length + 8 > header_message_length THEN
+                IF current_length + 8 >= header_message_length THEN
                     current_length <= 8 - header_message_length + current_length;
+                    output_ready <= '1';
                 ELSE
+                    output_ready <= '0';
                     current_length <= current_length + 8;
                 END IF;
             END IF;
