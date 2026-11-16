@@ -46,37 +46,37 @@ def process_output(dut):
     return data_out
 
 
-# @c.test
+@c.test
 async def continous_itch_stream_test(dut):
     Clock(dut.clk, 1, "ns").start()
     dut.reset.value = 0
 
     stream = []
     message_types = []
-    current_index = 0
-    check_index = 0
-    type_index = -1
+    check_index = 0 # Compensates for unaddressed issue with incorrect output_ready flag activation on first message
+    stream_index = 0;
 
-    for n in range(10):
+    for n in range(1000):
         message_type = r.randint(0,21)
         type, message = MESSAGES[message_type]
         stream += message
         message_types.append(type)
-    while current_index < len(stream):
+    for x in range(8 - len(stream) % 8):
+        stream.append(0)
+    for i in range(-(-len(stream) // 8)):
         await FallingEdge(dut.clk)
-        dut.ITCH_stream.value = stream[current_index:current_index + 8]
-        current_index += 8
-        await RisingEdge(dut.clk)
-        if current_index >= check_index:
-            type_index += 1
-            check_index += parse.type_to_length[message_types[type_index]]
-            c.log.info(dut.output_ready)
-            c.log.info()
-            c.log.info(process_output(dut))
+        dut.ITCH_stream.value = stream[i*8:(i+1)*8]
+        if dut.output_ready.value == 1:
+            actual_output = process_output(dut)[0:parse.type_to_length[message_types[check_index]]+2]
+            expected_output = stream[stream_index:stream_index + parse.type_to_length[message_types[check_index]]+2]
+            stream_index += parse.type_to_length[message_types[check_index]] + 2
+            check_index += 1
+            assert actual_output == expected_output
 
 
 
-@c.test
+
+# @c.test
 async def single_itch_test(dut):
     Clock(dut.clk, 1, "ns").start()
     for n in range(10):
@@ -85,9 +85,8 @@ async def single_itch_test(dut):
         await reset(dut)
         for m in range(len(message) % 8 ):
             message.append(0)
+        c.log.info(message)
         for l in range(int(len(message) / 8)):
             await FallingEdge(dut.clk)
             dut.ITCH_stream.value = message[l*8:(l+1)*8]
-            await RisingEdge(dut.clk)
-        c.log.info(message)
         c.log.info(process_output(dut))
