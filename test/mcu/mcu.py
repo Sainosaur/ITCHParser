@@ -29,7 +29,13 @@ MESSAGES = [
     ("B", [0, 19, 66, 251, 55, 187, 79, 13, 166, 105, 240, 68, 30, 111, 63, 2, 64, 43, 55, 216, 24]),  # 'B', 21 bytes
     ("I", [0, 50, 73, 95, 125, 38, 53, 37, 188, 107, 175, 113, 215, 0, 0, 0, 0, 0, 1, 33, 146, 0, 0, 0, 0, 0, 0, 232, 3, 83, 81, 81, 81, 32, 32, 32, 32, 32, 0, 59, 148, 57, 0, 64, 2, 158, 0, 42, 49, 23, 67, 52]),  # 'I', 52 bytes
     ("N", [0, 20, 78, 74, 129, 120, 88, 14, 104, 37, 129, 112, 249, 65, 77, 68, 32, 32, 32, 32, 32, 83]),  # 'N', 22 bytes
+    ("O", [0, 48, 79, 130, 183, 14, 238, 127, 26, 80, 57, 190, 240, 77, 83, 70, 84, 32, 32, 32, 32, 126, 194, 52, 127, 6, 110, 208, 143, 93, 199, 81, 36, 71, 227, 64, 67, 0, 2, 107, 110, 84, 85, 148, 160, 101, 104, 93, 100, 196]),  # 'O', 50 bytes
 ]
+
+# Value extremes for every message type: everything after the length prefix and type byte is all 0x00 or all 0xFF
+for msg_type, msg_length in parse.type_to_length.items():
+    for fill in (0, 255):
+        MESSAGES.append((msg_type, [0, msg_length, ord(msg_type)] + [fill] * (msg_length - 1)))
 
 
 async def reset(dut):
@@ -57,7 +63,7 @@ async def continous_itch_stream_test(dut):
     stream_index = 0;
 
     for n in range(1000):
-        message_type = r.randint(0,21)
+        message_type = r.randint(0, len(MESSAGES) - 1)
         type, message = MESSAGES[message_type]
         stream += message
         message_types.append(type)
@@ -72,6 +78,7 @@ async def continous_itch_stream_test(dut):
             stream_index += parse.type_to_length[message_types[check_index]] + 2
             check_index += 1
             assert actual_output == expected_output
+            assert dut.err_out.value == '0'
 
 
 
@@ -80,7 +87,7 @@ async def continous_itch_stream_test(dut):
 async def single_itch_test(dut):
     Clock(dut.clk, 1, "ns").start()
     for n in range(10):
-        message_index = r.randint(0,21)
+        message_index = r.randint(0, len(MESSAGES) - 1)
         type, message = MESSAGES[message_index]
         await reset(dut)
         for m in range(len(message) % 8 ):
