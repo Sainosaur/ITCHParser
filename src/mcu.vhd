@@ -61,8 +61,7 @@ BEGIN
     b0_n_in <= 8 - header_message_length + current_length WHEN current_length + 8 > header_message_length ELSE 0;
     direct_n_in <= header_message_length - current_length WHEN current_length + 8 > header_message_length ELSE
                    0 WHEN reset = '1' ELSE 8;
-    b0_write_enable <= '0' WHEN reset = '1' ELSE
-                    '1' WHEN current_length + 8 > header_message_length ELSE '0';
+    b0_write_enable <= '0' WHEN reset = '1' ELSE '1';
     reset_next_cycle <= '1' WHEN reset = '1' ELSE
                         '1' WHEN current_length + 8 >= header_message_length ELSE '0';
     b0_reset <= '1' WHEN reset = '1' ELSE '0';
@@ -94,7 +93,11 @@ BEGIN
                 END LOOP;
                 IF current_length + 8 >= header_message_length THEN
                     current_length <= 8 - header_message_length + current_length;
-                    output_ready <= '1';
+                    IF header_message_length = 0 THEN
+                        output_ready <= '0';
+                    ELSE
+                        output_ready <= '1';
+                    END IF;
                 ELSE
                     output_ready <= '0';
                     current_length <= current_length + 8;
