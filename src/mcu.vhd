@@ -32,7 +32,7 @@ ARCHITECTURE behavioral OF mcu IS
     SIGNAL b1_n_stored: INTEGER RANGE 0 to 64;
     SIGNAL b0_write_enable: STD_LOGIC := '0';
     SIGNAL reset_next_cycle: STD_LOGIC := '0';
-
+    SIGNAL err_check_next_cycle : STD_LOGIC := '0';
 BEGIN
     type_LUT : ENTITY work.type_LUT(behavioral) PORT MAP(clk => clk, message_type => message_type_register, message_length => LUT_length);
     buffer1: ENTITY work.buffer1(behavioral) PORT MAP (
@@ -56,8 +56,6 @@ BEGIN
     );
 
     message_type <= message_type_register;
-    err_out <= '1' WHEN b1_n_stored /= current_length OR TO_INTEGER(UNSIGNED(LUT_length)) /= header_message_length ELSE '0';
-
     b0_n_in <= 8 - header_message_length + current_length WHEN current_length + 8 > header_message_length ELSE 0;
     direct_n_in <= header_message_length - current_length WHEN current_length + 8 > header_message_length ELSE
                    0 WHEN reset = '1' ELSE 8;
@@ -80,17 +78,26 @@ BEGIN
                     IF current_length = 0 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(6))) + 2;
                         message_type_register <= ITCH_stream(5);
+                        err_check_next_cycle <= '1';
                     ELSIF current_length = 1 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7))) + 2;
                         message_type_register <= ITCH_stream(6);
+                        err_check_next_cycle <= '1';
                     ELSIF current_length = 2 THEN
                         message_type_register <= ITCH_stream(7);
+                        err_check_next_cycle <= '1';
                     ELSIF current_length + i = header_message_length + 1 THEN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7 - i))) + 2;
                     ELSIF current_length + i = header_message_length + 2 THEN
                         message_type_register <= ITCH_stream(7 - i);
                     END IF;
                 END LOOP;
+
+                IF err_check_next_cycle = '1' THEN
+                    err_out <= '1' WHEN TO_INTEGER(UNSIGNED(LUT_length)) /= header_message_length ELSE '0';
+                    err_check_next_cycle <= '0';
+                END IF;
+
                 IF current_length + 8 >= header_message_length THEN
                     current_length <= 8 - header_message_length + current_length;
                     IF header_message_length = 0 THEN
