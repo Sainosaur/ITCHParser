@@ -90,6 +90,7 @@ BEGIN
                         header_message_length <= TO_INTEGER(UNSIGNED(ITCH_stream(7 - i))) + 2;
                     ELSIF current_length + i = header_message_length + 2 THEN
                         message_type_register <= ITCH_stream(7 - i);
+                        err_check_next_cycle <= '1';
                     END IF;
                 END LOOP;
 
